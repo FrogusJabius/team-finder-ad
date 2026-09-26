@@ -49,12 +49,16 @@
     font-size: 22px;
     font-weight: bold;
     margin: 10px 0;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .project-description {
     font-size: 15px;
     color: #444;
     margin-bottom: 16px;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .project-link {
