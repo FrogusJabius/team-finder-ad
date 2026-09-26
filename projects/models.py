@@ -1,29 +1,42 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 from django.urls import reverse
 
+from team_finder.constants import (PROJECT_NAME_MAX_LENGTH, STATUS_CLOSED,
+                                   STATUS_MAX_LENGTH, STATUS_OPEN)
+
+
 class Project(models.Model):
-    STATUS_CHOICES = [('open', 'Открыт'), ('closed', 'Закрыт')]
-    
-    title = models.CharField(max_length=200, verbose_name="Название")
-    description = models.TextField(verbose_name="Описание")
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_projects')
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='open')
+    STATUS_CHOICES = [
+        (STATUS_OPEN, 'Open'),
+        (STATUS_CLOSED, 'Closed'),
+    ]
+
+    name = models.CharField(max_length=PROJECT_NAME_MAX_LENGTH)
+    description = models.TextField(blank=True)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='owned_projects'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
-    members = models.ManyToManyField(settings.AUTH_USER_MODEL, through='ProjectMember', related_name='joined_projects', blank=True)
-    
-    favorited_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='favorite_projects', blank=True)
+    github_url = models.URLField(blank=True)
+    status = models.CharField(
+        max_length=STATUS_MAX_LENGTH,
+        choices=STATUS_CHOICES,
+        default=STATUS_OPEN
+    )
+    participants = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name='participated_projects'
+    )
 
     class Meta:
         ordering = ['-created_at']
 
+    def __str__(self):
+        return self.name
+
     def get_absolute_url(self):
-        return reverse('projects:project_detail', kwargs={'pk': self.pk})
-
-class ProjectMember(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    joined_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('user', 'project')
+        return reverse('projects:detail', kwargs={'project_id': self.pk})
